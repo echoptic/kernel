@@ -1,6 +1,11 @@
 use core::fmt::Write;
 
+use spin::Mutex;
 use stivale_boot::v2::StivaleStruct;
+
+pub fn init_writer(stivale_struct: &'static StivaleStruct) {
+    WRITER.lock().stivale_struct = Some(stivale_struct);
+}
 
 pub struct TermWriter<'a> {
     stivale_struct: Option<&'a StivaleStruct>,
@@ -17,23 +22,17 @@ impl<'a> Write for TermWriter<'a> {
     }
 }
 
-pub static mut TERM_WRITER: TermWriter = TermWriter {
+pub static WRITER: Mutex<TermWriter> = Mutex::new(TermWriter {
     stivale_struct: None,
-};
-
-pub fn init_terminal_writer(stivale_struct: &'static StivaleStruct) {
-    unsafe {
-        TERM_WRITER.stivale_struct = Some(stivale_struct);
-    }
-}
+});
 
 #[macro_export]
 macro_rules! kprint {
 	($($arg:tt)+) => ({
 		use core::fmt::Write;
-        use crate::terminal::TERM_WRITER;
+        use crate::terminal::WRITER;
 
-        let _ = unsafe { TERM_WRITER.write_fmt(format_args!($($arg)+)) };
+        let _ = WRITER.lock().write_fmt(format_args!($($arg)+));
 
 	});
 }
