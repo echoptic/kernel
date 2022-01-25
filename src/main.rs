@@ -7,16 +7,19 @@ extern crate alloc;
 
 mod allocator;
 mod boot;
+mod date_time;
+mod drivers;
 mod interrupts;
 mod terminal;
 
-use alloc::vec::Vec;
 use stivale_boot::v2::StivaleStruct;
 use x86_64::instructions;
 
+use crate::date_time::{Date, Time};
+
 fn init(stivale_struct: &'static StivaleStruct) {
-    terminal::init_writer(stivale_struct);
     interrupts::init_idt();
+    terminal::init_writer(stivale_struct);
     allocator::init(stivale_struct);
 }
 
@@ -24,13 +27,8 @@ fn init(stivale_struct: &'static StivaleStruct) {
 fn kmain(stivale_struct: &'static StivaleStruct) -> ! {
     init(stivale_struct);
 
-    instructions::interrupts::int3();
-
-    let mut v = Vec::new();
-    for i in 0..100 {
-        v.push(i);
-    }
-    kprintln!("{:?}", v);
+    kprintln!("TIME: {}", Time::get_current());
+    kprintln!("DATE: {}", Date::get_current());
 
     loop {
         instructions::hlt();

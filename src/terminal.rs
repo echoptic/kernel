@@ -3,6 +3,10 @@ use core::fmt::Write;
 use spin::Mutex;
 use stivale_boot::v2::StivaleStruct;
 
+pub static WRITER: Mutex<TermWriter> = Mutex::new(TermWriter {
+    stivale_struct: None,
+});
+
 pub fn init_writer(stivale_struct: &'static StivaleStruct) {
     WRITER.lock().stivale_struct = Some(stivale_struct);
 }
@@ -13,18 +17,15 @@ pub struct TermWriter<'a> {
 
 impl<'a> Write for TermWriter<'a> {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        Ok(self
-            .stivale_struct
+        self.stivale_struct
             .unwrap()
             .terminal()
             .unwrap()
-            .term_write()(s))
+            .term_write()(s);
+
+        Ok(())
     }
 }
-
-pub static WRITER: Mutex<TermWriter> = Mutex::new(TermWriter {
-    stivale_struct: None,
-});
 
 #[macro_export]
 macro_rules! kprint {
